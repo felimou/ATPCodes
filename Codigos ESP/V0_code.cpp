@@ -1,3 +1,11 @@
+//Código desenvolvido por Luis Felipe
+//Última atualização neste código: 11/11/2020
+
+/*Este código pode/deve ser gravado em todas as ESP's. 
+A partir dele, o dispositivo móvel pode conectar-se a qualquer uma das ESP's por Bluetooth Classic, 
+e enviar um comando para envio de mensagens via ESP-NOW para as outras ESP's.
+*/
+
 #include <esp_now.h>
 #include <WiFi.h>
 #include <BluetoothSerial.h>
