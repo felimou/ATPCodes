@@ -46,7 +46,7 @@ void OnDataSent(const uint8_t *mac, esp_now_send_status_t status);
 void envia_mensagem();
 void define_mensagem();
 String leStringSerial();
-int leBTSerial();
+String leBTSerial();
 
 void setup()
 {
@@ -182,34 +182,30 @@ void define_mensagem()
 
     if (SerialBT.available() > 0)
     {
-        int recebido_BT = leBTSerial();
+        String recebido_BT = leBTSerial();
 
-        if (recebido_BT == 48) //0 em decimal
+        if (recebido_BT == "C0") //0 em decimal
         {
             destino = 0;
             envia_mensagem();
         }
 
-        if (recebido_BT == 49) //1 em decimal
+        if (recebido_BT == "C1") //1 em decimal
         {
             destino = 1;
             envia_mensagem();
         }
 
-        if (recebido_BT == 50) //2 em decimal
+        if (recebido_BT == "C2") //2 em decimal
         {
             destino = 2;
             envia_mensagem();
         }
 
-        if (recebido_BT == 51) //3 em decimal
+        if (recebido_BT == "C3") //3 em decimal
         {
             destino = 3;
             envia_mensagem();
-        }
-
-        if (recebido_BT == 52) //4 em decimal
-        {
         }
     }
 }
@@ -238,19 +234,22 @@ String leStringSerial()
     return conteudo;
 }
 
-int leBTSerial()
+String leBTSerial()
 {
-    int caractere;
-    int conteudo;
-    if (SerialBT.available() > 0)
+    String conteudo = "";
+    String conteudo_final = "";
+
+    // Enquanto receber algo pela serial
+    while (SerialBT.available() > 0)
     {
-        caractere = SerialBT.read();
-        if (caractere != 10 && caractere != 13)
+        conteudo = SerialBT.readString();
+        for(int i = 0; i <= conteudo.length(); i++)
         {
-            conteudo = caractere;
+          if( i >= 5)
+          conteudo_final.concat(conteudo[i]);
         }
-        //Serial.print("Recebido pelo BT: ");
-        //Serial.println(conteudo);
     }
-    return conteudo;
+    Serial.print("Recebido pelo BT: ");
+    Serial.println(conteudo_final);
+    return conteudo_final;
 }
