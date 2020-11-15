@@ -1,5 +1,5 @@
 //Código desenvolvido por Luis Felipe
-//Última atualização neste código: 14/11/2020
+//Última atualização neste código: 15/11/2020
 
 /*Este código pode/deve ser gravado em todas as ESP's. 
 A partir dele, o dispositivo móvel pode conectar-se a qualquer uma das ESP's por Bluetooth Classic(BT),
@@ -7,11 +7,13 @@ e enviar um comando para envio de mensagens via ESP-NOW para as outras ESP's.
 
 Acrescido nesta versão: Será enviado pelo BT uma sequencia com 3 inteiros, para ligar o LED em determinada cor
 O protocolo para determinar a cor, faz o envio de uma String com um número de 10 dígitos,
-Sendo: {0}{123}{456}{789}.
+Sendo: {0}{123}{456}{789}{0}.
 O primeiro dígito {0}, refere-se ao comando que deve ser executado. No exemplo, 0 refere-se aos LEDS.
 Os dígitos {123}, referem-se a cor vermelha do LED e deve ser um número entre 0 e 255.
 Os dígitos {456}, referem-se a cor verde do LED e deve ser um número entre 0 e 255.
 Os dígitos {789}, referem-se a cor azul do LED e deve ser um número entre 0 e 255.
+O ultimo dígito {0}, refere-se a qual dispositivo deve ser enviado o comando, sendo '0' o envio em broadcast(para todos),
+e de '1' a '6' para as respectivas ESPs cadastradas em broadcastAddress.
 */
 
 #include <esp_now.h>
@@ -68,6 +70,7 @@ BluetoothSerial SerialBT;
 
 //Escopo de Funções
 void start_espnow();
+void callbackBT(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
 void onReceiveData(const uint8_t *mac, const uint8_t *data, int len);
 void OnDataSent(const uint8_t *mac, esp_now_send_status_t status);
 void envia_mensagem();
@@ -88,7 +91,9 @@ void setup()
     //Inicializa Serial
     Serial.begin(115200);
     //Inicializa BluetoothSerial
+    SerialBT.register_callback(callbackBT);
     SerialBT.begin("ESP32");
+    
 
     //Define modo do Wi-Fi em Station
     WiFi.mode(WIFI_STA);
@@ -137,6 +142,19 @@ void start_espnow()
         //Copia o endereço do array para a estrutura
         memcpy(peerInfo.peer_addr, broadcastAddress[i], sizeof(broadcastAddress[i]));
         esp_now_add_peer(&peerInfo);
+    }
+}
+
+void callbackBT(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
+{
+    if (event == ESP_SPP_SRV_OPEN_EVT)
+    {
+        Serial.println("Cliente conectado!");
+    }
+
+    if (event == ESP_SPP_CLOSE_EVT)
+    {
+        Serial.println("Cliente desconectado!");
     }
 }
 
@@ -241,17 +259,15 @@ void define_mensagem()
                     numb = "";
                 }
             }
-            destino = 0;
-
-            Serial.println("Dados enviados: ");
-            Serial.print("Comando: ");
-            Serial.println(enviado.comando);
-            Serial.print("red: ");
-            Serial.println(enviado.red);
-            Serial.print("green: ");
-            Serial.println(enviado.green);
-            Serial.print("blue: ");
-            Serial.println(enviado.blue);
+            for (int i = 10; i <= 11; i++)
+            {
+                numb.concat(recebido_BT[i]);
+                if (i == 11)
+                {
+                    destino = numb.toInt();
+                    numb = "";
+                }
+            }
             envia_mensagem();
         }
     }
